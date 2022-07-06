@@ -1,96 +1,65 @@
-const wrapper = document.querySelector(".wrapper"),
-inputPart = document.querySelector(".input-part"),
-infoTxt = inputPart.querySelector(".info-txt"),
-inputField = inputPart.querySelector("input"),
-locationBtn = inputPart.querySelector("button"),
-weatherPart = wrapper.querySelector(".weather-part"),
-wIcon = weatherPart.querySelector("img"),
-arrowBack = wrapper.querySelector("header i");
+var myArray = []
+const form = document.getElementById('myForm');
 
-let api;
+const weatherData = () => {
+    
+    form.addEventListener("submit", function (event) {
+        // stop form submission
+        event.preventDefault();
+        let latitude = document.getElementById("latitude").value;
+        let longitude = document.getElementById("longitude").value;
 
-inputField.addEventListener("keyup", e =>{
-    // if user pressed enter btn and input value is not empty
-    if(e.key == "Enter" && inputField.value != ""){
-        requestApi(inputField.value);
-    }
-});
-
-locationBtn.addEventListener("click", () =>{
-    if(navigator.geolocation){ // if browser support geolocation api
-        navigator.geolocation.getCurrentPosition(onSuccess, onError);
-    }else{
-        alert("Your browser not support geolocation api");
-    }
-});
-
-function requestApi(city){
-    api = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=your_api_key`;
-    fetchData();
-}
-
-function onSuccess(position){
-    const {latitude, longitude} = position.coords; // getting lat and lon of the user device from coords obj
-    api = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m`;
-    fetchData();
-}
-
-function onError(error){
-    // if any error occur while getting user location then we'll show it in infoText
-    infoTxt.innerText = error.message;
-    infoTxt.classList.add("error");
-}
-
-function fetchData(){
-    infoTxt.innerText = "Getting weather details...";
-    infoTxt.classList.add("pending");
-    // getting api response and returning it with parsing into js obj and in another 
-    // then function calling weatherDetails function with passing api result as an argument
-    fetch(api).then(res => res.json()).then(result => weatherDetails(result)).catch(() =>{
-        infoTxt.innerText = "Something went wrong";
-        infoTxt.classList.replace("pending", "error");
-    });
-}
-
-function weatherDetails(info){
-    if(info.cod == "404"){ // if user entered city name isn't valid
-        infoTxt.classList.replace("pending", "error");
-        infoTxt.innerText = `${inputField.value} isn't a valid city name`;
-    }else{
-        //getting required properties value from the whole weather information
-        const city = info.name;
-        const country = info.sys.country;
-        const {description, id} = info.weather[0];
-        const {temp, feels_like, humidity} = info.main;
-
-        // using custom weather icon according to the id which api gives to us
-        if(id == 800){
-            wIcon.src = "icons/clear.svg";
-        }else if(id >= 200 && id <= 232){
-            wIcon.src = "icons/storm.svg";  
-        }else if(id >= 600 && id <= 622){
-            wIcon.src = "icons/snow.svg";
-        }else if(id >= 701 && id <= 781){
-            wIcon.src = "icons/haze.svg";
-        }else if(id >= 801 && id <= 804){
-            wIcon.src = "icons/cloud.svg";
-        }else if((id >= 500 && id <= 531) || (id >= 300 && id <= 321)){
-            wIcon.src = "icons/rain.svg";
-        }
+    
+        let url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m&hourly=windspeed_120m&hourly=relativehumidity_2m&hourly=cloudcover_mid`;
+    
+    const getData = async () => {
+            try {
+                const res = await fetch(url)
+                // console.log(res)
+                if(!res.ok) {
+                    const msg = `there is an error "${res.status}, ${res.statusText}"`
+                    throw new Error(msg)
+                }
+                const data = await res.json()
+                myArray.push(data)
+                const hourly = myArray.filter((item) => {
+                    var relativeHumidity = item.hourly.relativehumidity_2m;
+                    var windspeed = item.hourly.windspeed_120m;
+                    var temperature = item.hourly.temperature_2m;
+                    var cloudcover = item.hourly.cloudcover_mid;
+   
+                    console.log("relative humidity is",relativeHumidity)
+                    console.log("windspeed is", windspeed)
+                    console.log("cloudcover", cloudcover)
+                    console.log("temperature", temperature)
+               
+                    return windspeed;
+                    return temperature;
+                    return cloudcover;
+                    return relativeHumidity;
+                })
+                
+                return hourly
+            } catch (error) {
+                console.log(error)
+            }
+        };
         
-        //passing a particular weather info to a particular element
-        weatherPart.querySelector(".temp .numb").innerText = Math.floor(temp);
-        weatherPart.querySelector(".weather").innerText = description;
-        weatherPart.querySelector(".location span").innerText = `${city}, ${country}`;
-        weatherPart.querySelector(".temp .numb-2").innerText = Math.floor(feels_like);
-        weatherPart.querySelector(".humidity span").innerText = `${humidity}%`;
-        infoTxt.classList.remove("pending", "error");
-        infoTxt.innerText = "";
-        inputField.value = "";
-        wrapper.classList.add("active");
-    }
+        getData().then(data => console.log(data))
+    })
 }
 
-arrowBack.addEventListener("click", ()=>{
-    wrapper.classList.remove("active");
-});
+weatherData()
+
+let arr1 = [relativeHumidity];
+document.getElementById("arr1Print").innerHTML = arr1;
+
+
+let arr2 = [windspeed];
+document.getElementById("arr2Print").innerHTML = arr2;
+
+let arr3 = [cloudcover];
+document.getElementById("arr3Print").innerHTML = arr3;
+
+let arr4 = [temperature];
+document.getElementById("arr4Print").innerHTML = arr4;
